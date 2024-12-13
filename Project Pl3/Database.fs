@@ -35,6 +35,50 @@ module Database =
                     Status = status
                 }
         ]
+let borrowBook (bookId: int) (borrower: string) =
+        use conn = new SqlConnection(connectionString)
+        conn.Open()
+        use cmd = new SqlCommand("""
+            UPDATE Books 
+            SET Status = 'Borrowed', 
+                BorrowDate = @BorrowDate, 
+                Borrower = @Borrower 
+            WHERE Id = @BookId AND Status = 'Available'""", conn)
+        cmd.Parameters.AddWithValue("@BookId", bookId) |> ignore
+        cmd.Parameters.AddWithValue("@BorrowDate", DateTime.Now) |> ignore
+        cmd.Parameters.AddWithValue("@Borrower", borrower) |> ignore
+        cmd.ExecuteNonQuery() > 0
 
+    let returnBook (bookId: int) =
+        use conn = new SqlConnection(connectionString)
+        conn.Open()
+        use cmd = new SqlCommand("""
+            UPDATE Books 
+            SET Status = 'Available', 
+                BorrowDate = NULL, 
+                Borrower = NULL 
+            WHERE Id = @BookId AND Status = 'Borrowed'""", conn)
+        cmd.Parameters.AddWithValue("@BookId", bookId) |> ignore
+        cmd.ExecuteNonQuery() > 0
+
+    let getAllBooks() =
+        use conn = new SqlConnection(connectionString)
+        conn.Open()
+        use cmd = new SqlCommand("SELECT * FROM Books", conn)
+        use reader = cmd.ExecuteReader()
+        [
+            while reader.Read() do
+                let status = 
+                    if reader.["Status"].ToString() = "Available" then Available
+                    else Borrowed(reader.GetDateTime(reader.GetOrdinal("BorrowDate")),
+                                reader.["Borrower"].ToString())
+                yield {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id"))
+                    Title = reader.["Title"].ToString()
+                    Author = reader.["Author"].ToString()
+                    Gender = reader.["Gender"].ToString()
+                    Status = status
+                }
+        ]
 
 
