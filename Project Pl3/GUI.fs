@@ -1,4 +1,4 @@
-﻿namespace LibraryManagementSystem
+namespace LibraryManagementSystem
 
 open System
 open System.Windows.Forms
@@ -82,3 +82,88 @@ module GUI =
                 form.Close())
         
         form.ShowDialog() |> ignore
+
+    let showBorrowDialog (bookId: int) (onBookBorrowed: unit -> unit) =
+        use form = new Form(
+            Text = "Borrow Book",
+            Width = 350,
+            Height = 200,
+            StartPosition = FormStartPosition.CenterParent,
+            FormBorderStyle = FormBorderStyle.FixedDialog,
+            MaximizeBox = false,
+            MinimizeBox = false)
+
+        let layout = new TableLayoutPanel(
+            Dock = DockStyle.Fill,
+            RowCount = 3,
+            ColumnCount = 2,
+            Padding = new Padding(20))
+
+        let borrowerBox = new ModernTextBox()
+        let borrowButton = new ModernButton(Text = "Borrow")
+        
+        layout.Controls.Add(new Label(Text = "Borrower:", Font = new Font("Segoe UI", 9.0f)), 0, 0)
+        layout.Controls.Add(borrowerBox, 1, 0)
+        layout.Controls.Add(borrowButton, 1, 1)
+        
+        form.Controls.Add(layout)
+        
+        borrowButton.Click.Add(fun _ ->
+            if String.IsNullOrWhiteSpace(borrowerBox.Text) then
+                MessageBox.Show("Please enter borrower name", "Validation Error",
+                              MessageBoxButtons.OK, MessageBoxIcon.Warning) |> ignore
+            else if Database.borrowBook bookId borrowerBox.Text then
+                MessageBox.Show("Book borrowed successfully", "Success",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information) |> ignore
+                onBookBorrowed()
+                form.Close()
+            else
+                MessageBox.Show("Failed to borrow book. It might already be borrowed.",
+                              "Error", MessageBoxButtons.OK, MessageBoxIcon.Error) |> ignore)
+        
+        form.ShowDialog() |> ignore
+
+    // Main Form
+    type MainForm() as this =
+        inherit Form()
+
+        let mainTableLayout = new TableLayoutPanel(
+            Dock = DockStyle.Fill,
+            RowCount = 3,
+            ColumnCount = 1,
+            Padding = new Padding(20))
+        
+        let searchPanel = new TableLayoutPanel(
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            Height = 50,
+            RowCount = 1)
+
+        let buttonPanel = new FlowLayoutPanel(
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            Padding = new Padding(10),
+            AutoSize = true)
+
+        let searchBox = new ModernTextBox(
+            Width = 300,
+            Dock = DockStyle.Fill,
+            Margin = new Padding(10),
+            PlaceholderText = "Search for books...")
+
+        let searchButton = new ModernButton(
+            Text = "Search",
+            Dock = DockStyle.Fill,
+            Margin = new Padding(10))
+            
+        let booksList = new DataGridView(
+            Dock = DockStyle.Fill,
+            BackgroundColor = Color.White,
+            BorderStyle = BorderStyle.None,
+            RowHeadersVisible = false,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+            SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            AllowUserToAddRows = false,
+            AllowUserToDeleteRows = false,
+            ReadOnly = true,
+            Margin = new Padding(10))
