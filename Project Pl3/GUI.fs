@@ -1,4 +1,4 @@
-namespace LibraryManagementSystem
+﻿namespace LibraryManagementSystem
 
 open System
 open System.Windows.Forms
@@ -167,7 +167,7 @@ module GUI =
             AllowUserToDeleteRows = false,
             ReadOnly = true,
             Margin = new Padding(10))
-
+        
         let addBookButton = new ModernButton(
             Text = "Add New Book",
             Margin = new Padding(5))
@@ -196,3 +196,81 @@ module GUI =
                     box status
                 |]
                 booksList.Rows.Add(row) |> ignore)
+
+        do
+            this.Text <- "Library Management System"
+            this.Size <- new Size(800, 600)
+            this.StartPosition <- FormStartPosition.CenterScreen
+            this.Font <- new Font("Segoe UI", 9.0f)
+            
+            booksList.Columns.Add("Id", "ID") |> ignore
+            booksList.Columns.Add("Title", "Title") |> ignore
+            booksList.Columns.Add("Author", "Author") |> ignore
+            booksList.Columns.Add("Gender", "Gender") |> ignore
+            booksList.Columns.Add("Status", "Status") |> ignore
+            
+            searchPanel.Controls.Add(searchBox, 0, 0)
+            searchPanel.Controls.Add(searchButton, 1, 0)
+            searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80.0f)) |> ignore
+            searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20.0f)) |> ignore
+            
+            buttonPanel.Controls.AddRange([| 
+                addBookButton :> Control
+                borrowButton :> Control
+                returnButton :> Control
+            |])
+            
+            mainTableLayout.Controls.Add(searchPanel, 0, 0)
+            mainTableLayout.Controls.Add(booksList, 0, 1)
+            mainTableLayout.Controls.Add(buttonPanel, 0, 2)
+            
+            this.Controls.Add(mainTableLayout)
+            
+            // Wire up events
+            searchButton.Click.Add(fun _ ->
+                booksList.Rows.Clear()
+                Database.searchBooks searchBox.Text
+                |> List.iter (fun book ->
+                    let status = 
+                        match book.Status with
+                        | Available -> "Available"
+                        | Borrowed(date, borrower) -> 
+                            sprintf "Borrowed by %s on %s" borrower (date.ToShortDateString())
+                    let row = [| 
+                        box book.Id
+                        box book.Title
+                        box book.Author
+                        box book.Gender
+                        box status
+                    |]
+                    booksList.Rows.Add(row) |> ignore))
+            
+            addBookButton.Click.Add(fun _ -> showAddBookDialog refreshBooksList)
+            
+            borrowButton.Click.Add(fun _ ->
+                if booksList.SelectedRows.Count = 0 then
+                    MessageBox.Show("Please select a book to borrow", "Selection Required",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information) |> ignore
+                else
+                    let selectedRow = booksList.SelectedRows.[0]
+                    let bookId = int (selectedRow.Cells.[0].Value.ToString())
+                    showBorrowDialog bookId refreshBooksList)
+            
+            returnButton.Click.Add(fun _ ->
+                if booksList.SelectedRows.Count = 0 then
+                    MessageBox.Show("Please select a book to return", "Selection Required",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information) |> ignore
+                else
+                    let selectedRow = booksList.SelectedRows.[0]
+                    let bookId = int (selectedRow.Cells.[0].Value.ToString())
+                    if Database.returnBook bookId then
+                        MessageBox.Show("Book returned successfully", "Success",
+                                      MessageBoxButtons.OK, MessageBoxIcon.Information) |> ignore
+                        refreshBooksList()
+                    else
+                        MessageBox.Show("Failed to return book. It might not be borrowed.",
+                                      "Error", MessageBoxButtons.OK, MessageBoxIcon.Error) |> ignore)
+            
+            // Initialize database and load books
+            Database.createTables()
+            refreshBooksList()
