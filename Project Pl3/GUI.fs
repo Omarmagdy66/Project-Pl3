@@ -167,3 +167,32 @@ module GUI =
             AllowUserToDeleteRows = false,
             ReadOnly = true,
             Margin = new Padding(10))
+
+        let addBookButton = new ModernButton(
+            Text = "Add New Book",
+            Margin = new Padding(5))
+
+        let borrowButton = new ModernButton(
+            Text = "Borrow Book",
+            Margin = new Padding(5))
+
+        let returnButton = new ModernButton(
+            Text = "Return Book",
+            Margin = new Padding(5))
+        
+        let refreshBooksList() =
+            booksList.Rows.Clear()
+            Database.getAllBooks()
+            |> List.iter (fun book ->
+                let status = 
+                    match book.Status with
+                    | Available -> "Available"
+                    | Borrowed(date, borrower) -> sprintf "Borrowed by %s on %s" borrower (date.ToShortDateString())
+                let row = [| 
+                    box book.Id
+                    box book.Title
+                    box book.Author
+                    box book.Gender
+                    box status
+                |]
+                booksList.Rows.Add(row) |> ignore)
