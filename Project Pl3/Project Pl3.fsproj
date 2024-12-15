@@ -10,6 +10,7 @@
     <Compile Include="Models.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="GUI.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>

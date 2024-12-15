@@ -271,6 +271,5 @@ module GUI =
                         MessageBox.Show("Failed to return book. It might not be borrowed.",
                                       "Error", MessageBoxButtons.OK, MessageBoxIcon.Error) |> ignore)
             
-            // Initialize database and load books
-            Database.createTables()
+            
             refreshBooksList()
