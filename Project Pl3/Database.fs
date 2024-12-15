@@ -1,5 +1,6 @@
 ﻿namespace LibraryManagementSystem
 
+open System
 open System.Data.SqlClient
 
 module Database =
@@ -35,7 +36,7 @@ module Database =
                     Status = status
                 }
         ]
-let borrowBook (bookId: int) (borrower: string) =
+    let borrowBook (bookId: int) (borrower: string) =
         use conn = new SqlConnection(connectionString)
         conn.Open()
         use cmd = new SqlCommand("""

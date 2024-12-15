@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Database.fs" />
     <Compile Include="Models.fs" />
+    <Compile Include="Database.fs" />
     <Compile Include="GUI.fs" />
   </ItemGroup>
 
